@@ -304,11 +304,7 @@ class GitClient(VcsClientBase):
                     if remote != default_remote:
                         # if remote is not origin, must not fast-forward (because based on origin)
                         logger = logging.getLogger('vcstools')
-                        logger.warn("vcstools only handles branches tracking default remote,"
-                                    " branch '%s' tracks remote '%s'. Make sure to set the right"
-                                    " remote if the remote is not what you expect.\nRepository"
-                                    " path is '%s'."
-                                    % (current_branch, remote, self._path))
+                        logger.warn(self._msg_invalid_remote(current_branch, remote, self._path))
                         branch_parent = None
                 # already on correct branch, fast-forward if there is a parent
                 if branch_parent:
@@ -354,8 +350,7 @@ class GitClient(VcsClientBase):
                 (new_branch_parent, remote) = self._get_branch_parent(current_branch=refname)
                 if remote != default_remote:
                     # if remote is not origin, must not fast-forward (because based on origin)
-                    sys.stderr.write("vcstools only handles branches tracking default remote," +
-                                     " branch '%s' tracks remote '%s'\n" % (current_branch, remote))
+                    sys.stderr.write(self._msg_invalid_remote(current_branch, remote, self._path))
                     new_branch_parent = None
                 if new_branch_parent is not None:
                     if fast_foward:
@@ -364,6 +359,15 @@ class GitClient(VcsClientBase):
                                                      verbose=verbose):
                             return False
         return (not update_submodules) or self._update_submodules(verbose=verbose, timeout=timeout)
+
+    def _msg_invalid_remote(self, current_branch, remote, path_repo):
+        """
+        Returns warning msg when the remote is invalid. 
+        See https://github.com/vcstools/vcstools/pull/137
+        """
+        return """vcstools can only handle branches tracking remote named
+origin, but branch '%s' tracks remote '%s'.\nPlease reconfigure remote or change branch.
+Repository path is '%s'.""" % (current_branch, remote, path_repo)
 
     def get_current_version_label(self):
         """
